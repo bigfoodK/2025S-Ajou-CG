@@ -1,10 +1,22 @@
+import Camera from "./Camera";
+import WMP from "./Model/WMP/WMP";
+import DefaultShader from "./Shader/DefaultShader/DefaultShader";
+import type Shader from "./Shader/Shader";
+
 export class Scene {
-  private gl: WebGLRenderingContext;
+  public gl: WebGLRenderingContext;
   private shouldStopRendering: boolean = false;
   private lastRenderTime: number = 0;
+  public shaders: Map<string, Shader> = new Map();
+  private camera: Camera = new Camera();
+  private canonicalCube: WMP = new WMP({
+    position: { x: 0, y: 0, z: 0 },
+  });
+  private currentShaderName: string = "";
 
   constructor(canvas: HTMLCanvasElement) {
-    this.gl = canvas.getContext("webgl") as WebGLRenderingContext;
+    this.gl = WebGLUtils.setupWebGL(canvas)!;
+
     if (!this.gl) {
       throw new Error(
         "Unable to initialize WebGL. Your browser may not support it."
@@ -22,25 +34,113 @@ export class Scene {
     this.gl.enable(this.gl.DEPTH_TEST);
   }
 
-  render() {
+  private render() {
     if (this.shouldStopRendering) {
       return;
     }
 
     const currentTime = performance.now();
-    const _deltaTime = currentTime - this.lastRenderTime;
+    const deltaTime = currentTime - this.lastRenderTime;
     this.lastRenderTime = currentTime;
 
-    // TODO: Tick Objects
+    // Tick
+    this.camera.tick(this, deltaTime);
+    this.canonicalCube.tick(this, deltaTime, this.camera.viewMatrix);
+
+    // Clear
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-    // TODO: Render Objects
+
+    // Render
+    // TODO: Move lighting to somewhere else
+    const lightAmbient = vec4(0.2, 0.2, 0.2, 1.0);
+    const lightDiffuse = vec4(1.0, 1.0, 0.0, 1.0);
+    const lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+
+    const materialAmbient = vec4(1.0, 0.0, 1.0, 1.0);
+    const materialDiffuse = vec4(1.0, 0.8, 0.0, 1.0);
+    const materialSpecular = vec4(1.0, 0.8, 0.0, 1.0);
+
+    const ambientProduct = mult(lightAmbient, materialAmbient) as [
+      number,
+      number,
+      number,
+      number
+    ];
+    const diffuseProduct = mult(lightDiffuse, materialDiffuse) as [
+      number,
+      number,
+      number,
+      number
+    ];
+    const specularProduct = mult(lightSpecular, materialSpecular) as [
+      number,
+      number,
+      number,
+      number
+    ];
+    this.useShader(new DefaultShader())
+      .setLightingUniforms(this, {
+        ambientProduct,
+        diffuseProduct,
+        specularProduct,
+        shininess: 100.0,
+        lightPosition: [1, 1, -4, 1],
+      })
+      .setProjectionMatrixUniform(this, this.camera.projectionMatrix);
+
+    this.canonicalCube.render(this);
 
     requestAnimationFrame(this.render.bind(this));
   }
-  startRendering() {
+
+  public startRendering() {
+    this.camera.setProjectionProperty();
+    this.registerShaders();
     this.render();
   }
-  stopRendering() {
+
+  public stopRendering() {
     this.shouldStopRendering = true;
+  }
+
+  private registerShaders() {
+    new DefaultShader().register(this).registerModels(this, [new WMP()]);
+  }
+
+  public useShader<T extends Shader>(shader: T): T {
+    const registeredShader = this.shaders.get(shader.constructor.name);
+    if (!registeredShader) {
+      throw new Error(`Shader ${shader.constructor.name} is not registered.`);
+    }
+
+    if (shader.constructor.name === this.currentShaderName) {
+      return registeredShader as T;
+    }
+
+    this.currentShaderName = shader.constructor.name;
+    this.gl.useProgram(registeredShader.program);
+    return registeredShader as T;
+  }
+
+  public getUniformLocation(uniformName: string) {
+    const program = this.currentShader().program;
+    if (!program) {
+      throw new Error("No shader program is currently in use.");
+    }
+    const location = this.gl.getUniformLocation(program, uniformName as string);
+    if (!location) {
+      throw new Error(
+        `Uniform ${uniformName as string} not found in shader program.`
+      );
+    }
+    return location;
+  }
+
+  public currentShader() {
+    const shader = this.shaders.get(this.currentShaderName);
+    if (!shader) {
+      throw new Error(`Shader ${this.currentShaderName} is not registered.`);
+    }
+    return shader;
   }
 }
