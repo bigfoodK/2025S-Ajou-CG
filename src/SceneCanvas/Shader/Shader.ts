@@ -66,13 +66,15 @@ export default abstract class Shader {
   public registerModels(scene: Scene, models: Model[]): void {
     const vertices: number[][] = [];
     models.forEach((model) => {
-      const modelVertices = model.vertices();
-      const vertexInfo = {
-        index: vertices.length,
-        length: modelVertices.length,
-      };
-      this.modelVertexInfo.set(model.constructor.name, vertexInfo);
-      vertices.push(...modelVertices);
+      model.forEachModelIncludingSelf((model) => {
+        const modelVertices = model.vertices();
+        const vertexInfo = {
+          index: vertices.length,
+          length: modelVertices.length,
+        };
+        this.modelVertexInfo.set(model.constructor.name, vertexInfo);
+        vertices.push(...modelVertices);
+      });
     });
 
     const normals: number[][] = [];

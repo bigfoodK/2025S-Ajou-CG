@@ -6,6 +6,7 @@ export default class Camera {
   private gaze: XYZ = { x: 0, y: 0, z: 0 };
   public projectionMatrix: number[][] = mat4();
   public viewMatrix: number[][] = mat4();
+  private theta: number = 0;
 
   constructor() {}
 
@@ -19,6 +20,9 @@ export default class Camera {
   }
 
   public tick(_scene: Scene, _deltaTime: number) {
+    this.theta = this.theta + 0.01;
+    this.position.x = Math.cos(this.theta) * 3;
+    this.position.z = Math.sin(this.theta) * 3;
     const viewMatrix = lookAt(
       vec3(this.position.x, this.position.y, this.position.z),
       vec3(this.gaze.x, this.gaze.y, this.gaze.z),

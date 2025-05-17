@@ -1,5 +1,5 @@
 import Camera from "./Camera";
-import WMP from "./Model/WMP/WMP";
+import Character from "./Model/Character";
 import DefaultShader from "./Shader/DefaultShader/DefaultShader";
 import type Shader from "./Shader/Shader";
 
@@ -9,10 +9,10 @@ export class Scene {
   private lastRenderTime: number = 0;
   public shaders: Map<string, Shader> = new Map();
   private camera: Camera = new Camera();
-  private canonicalCube: WMP = new WMP({
+  private currentShaderName: string = "";
+  private character: Character = new Character({
     position: { x: 0, y: 0, z: 0 },
   });
-  private currentShaderName: string = "";
 
   constructor(canvas: HTMLCanvasElement) {
     this.gl = WebGLUtils.setupWebGL(canvas)!;
@@ -45,7 +45,7 @@ export class Scene {
 
     // Tick
     this.camera.tick(this, deltaTime);
-    this.canonicalCube.tick(this, deltaTime, this.camera.viewMatrix);
+    this.character.tick(this, deltaTime, this.camera.viewMatrix);
 
     // Clear
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -84,11 +84,11 @@ export class Scene {
         diffuseProduct,
         specularProduct,
         shininess: 100.0,
-        lightPosition: [1, 1, -4, 1],
+        lightPosition: [0, 0, -4, 1],
       })
       .setProjectionMatrixUniform(this, this.camera.projectionMatrix);
 
-    this.canonicalCube.render(this);
+    this.character.render(this);
 
     requestAnimationFrame(this.render.bind(this));
   }
@@ -104,7 +104,7 @@ export class Scene {
   }
 
   private registerShaders() {
-    new DefaultShader().register(this).registerModels(this, [new WMP()]);
+    new DefaultShader().register(this).registerModels(this, [this.character]);
   }
 
   public useShader<T extends Shader>(shader: T): T {

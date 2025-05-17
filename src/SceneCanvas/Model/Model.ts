@@ -21,6 +21,10 @@ export default abstract class Model {
 
   public abstract vertices(): number[][];
 
+  public abstract normals(): number[][];
+
+  public abstract render(scene: Scene): void;
+
   public tick(
     scene: Scene,
     deltaTime: number,
@@ -31,8 +35,6 @@ export default abstract class Model {
       child.tick(scene, deltaTime, this.modelViewMatrix);
     });
   }
-
-  public abstract render(scene: Scene): void;
 
   protected getVertexInfo(scene: Scene): VertexInfo {
     const vertexInfo = scene
@@ -71,6 +73,13 @@ export default abstract class Model {
     }
 
     this.modelViewMatrix = modelViewMatrix;
+  }
+
+  public forEachModelIncludingSelf(callback: (model: Model) => void) {
+    callback(this);
+    this.children.forEach((child) => {
+      child.forEachModelIncludingSelf(callback);
+    });
   }
 }
 
