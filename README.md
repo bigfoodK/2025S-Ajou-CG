@@ -1,54 +1,45 @@
-# React + TypeScript + Vite
+# 2025S-Ajou-CG
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Development Environment Setup & Running Instructions
 
-Currently, two official plugins are available:
+### 1. Install Bun
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This project uses [Bun](https://bun.sh/).
+After installation, restart your terminal or check if Bun is installed correctly:
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```
+bun --version
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 2. Install Dependencies
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+In the project root directory, run:
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
 ```
+bun install
+```
+
+### 3. Run Development Server
+
+Start the development server with:
+
+```
+bun dev
+```
+
+Open your browser and go to `http://localhost:5173` (or the address shown in your terminal) to view the web app.
+
+For more details, see each script and the [Bun documentation](https://bun.sh/docs).
+
+## Modeling
+
+1. Edit `objects.blend` file with [Blender](https://www.blender.org/)
+1. Export obj file to `src/SceneCanvas/Model/obj/objects.obj`. You can export obj file with `File > Export > Wavefront (.obj)`.
+   - Scale: 10
+   - Forward Axis: Y
+   - Up Axis: Z
+   - UV Coordinates: on
+   - Normals: on
+   - Triangulated Mesh: on
+   - Apply Modifiers: on
+   - ... off for else
