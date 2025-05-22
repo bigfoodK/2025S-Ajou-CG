@@ -1,5 +1,6 @@
 import Camera from "./Camera";
 import Character from "./Model/Character";
+import Floor from "./Model/Floor";
 import DefaultShader from "./Shader/DefaultShader/DefaultShader";
 import type Shader from "./Shader/Shader";
 
@@ -13,6 +14,7 @@ export class Scene {
   private character: Character = new Character({
     position: { x: 0, y: 0, z: 0 },
   });
+  private plane: Floor = new Floor();
 
   constructor(canvas: HTMLCanvasElement) {
     this.gl = WebGLUtils.setupWebGL(canvas)!;
@@ -46,6 +48,7 @@ export class Scene {
     // Tick
     this.camera.tick(this, deltaTime);
     this.character.tick(this, deltaTime, this.camera.viewMatrix);
+    this.plane.tick(this, deltaTime, this.camera.viewMatrix);
 
     // Clear
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -84,11 +87,12 @@ export class Scene {
         diffuseProduct,
         specularProduct,
         shininess: 100.0,
-        lightPosition: [0, 0, -4, 1],
+        lightPosition: [3, -3, -3, 1],
       })
       .setProjectionMatrixUniform(this, this.camera.projectionMatrix);
 
     this.character.render(this);
+    this.plane.render(this);
 
     requestAnimationFrame(this.render.bind(this));
   }
@@ -104,7 +108,9 @@ export class Scene {
   }
 
   private registerShaders() {
-    new DefaultShader().register(this).registerModels(this, [this.character]);
+    new DefaultShader()
+      .register(this)
+      .registerModels(this, [this.character, this.plane]);
   }
 
   public useShader<T extends Shader>(shader: T): T {

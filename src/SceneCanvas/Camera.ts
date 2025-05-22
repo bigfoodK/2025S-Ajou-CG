@@ -2,7 +2,7 @@ import type { XYZ } from "./Model/Model";
 import type { Scene } from "./Scene";
 
 export default class Camera {
-  private position: XYZ = { x: 3, y: 0, z: 3 };
+  private position: XYZ = { x: 3, y: 1.7, z: 3 };
   private gaze: XYZ = { x: 0, y: 0, z: 0 };
   public projectionMatrix: number[][] = mat4();
   public viewMatrix: number[][] = mat4();
