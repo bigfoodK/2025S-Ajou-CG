@@ -64,6 +64,7 @@ export default function parseBVH(bvhText: string): BVHNode {
           break;
         }
         case "}": {
+          index++;
           return { name, offset, channels, children };
         }
         case "{": {
@@ -88,7 +89,7 @@ export default function parseBVH(bvhText: string): BVHNode {
   while (index < lines.length && lines[index] !== "MOTION") index++;
   if (lines[index++] !== "MOTION") throw new Error("BVH: MOTION expected");
   const frames = parseInt(lines[index++].split(/\s+/)[1], 10);
-  const frameTime = parseFloat(lines[index++].split(/\s+/)[2]);
+  const frameTime = parseFloat(lines[index++].split(/\s+/)[2]) * 1000;
   const motion: number[][] = [];
   while (index < lines.length) {
     const frame = lines[index++].split(/\s+/).map(Number);
@@ -115,7 +116,7 @@ export default function parseBVH(bvhText: string): BVHNode {
         z: node.offset[2] || 0,
       },
       children: node.children.map(toBVHNode),
-      frameTime: 0,
+      frameTime,
       frames: [],
     };
     node.ref = bvhNode;
