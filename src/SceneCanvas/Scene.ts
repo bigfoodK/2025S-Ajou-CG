@@ -1,4 +1,5 @@
 import Camera from "./Camera";
+import Light from "./Light";
 import Character from "./Model/Character";
 import Floor from "./Model/Floor";
 import DefaultShader from "./Shader/DefaultShader/DefaultShader";
@@ -14,15 +15,27 @@ export class Scene {
   public textures: Map<string, WebGLTexture> = new Map();
   public keyState: Map<string, boolean> = new Map();
   private camera: Camera = new Camera();
+  private light: Light = new Light();
   private character: Character = new Character({
     position: { x: 0, y: 0, z: 0 },
   });
   private plane: Floor = new Floor();
-  public cameraDistance: number = 4;
-  public cameraSensitivity: number = 0.05;
+  public cameraDistance: number;
+  public cameraSensitivity: number;
+  public timeProgress: number;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(
+    canvas: HTMLCanvasElement,
+    init: {
+      cameraDistance: number;
+      cameraSensitivity: number;
+      timeProgress: number;
+    }
+  ) {
     this.gl = WebGLUtils.setupWebGL(canvas)!;
+    this.cameraDistance = init.cameraDistance;
+    this.cameraSensitivity = init.cameraSensitivity;
+    this.timeProgress = init.timeProgress;
 
     if (!this.gl) {
       throw new Error(
@@ -51,6 +64,7 @@ export class Scene {
     this.lastRenderTime = currentTime;
 
     // Tick
+    this.light.tick(this.timeProgress);
     this.camera.setTarget(this.character.getCameraTarget(this.cameraDistance));
     this.camera.tick(this, deltaTime);
     this.character.tick(this, deltaTime, this.camera.viewMatrix);
@@ -60,41 +74,8 @@ export class Scene {
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
 
     // Render
-    // TODO: Move lighting to somewhere else
-    const lightAmbient = vec4(0.6, 0.6, 0.6, 1.0);
-    const lightDiffuse = vec4(1.0, 1.0, 0.0, 1.0);
-    const lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
-
-    const materialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
-    const materialDiffuse = vec4(1.0, 0.8, 0.0, 1.0);
-    const materialSpecular = vec4(1.0, 0.8, 0.0, 1.0);
-
-    const ambientProduct = mult(lightAmbient, materialAmbient) as [
-      number,
-      number,
-      number,
-      number
-    ];
-    const diffuseProduct = mult(lightDiffuse, materialDiffuse) as [
-      number,
-      number,
-      number,
-      number
-    ];
-    const specularProduct = mult(lightSpecular, materialSpecular) as [
-      number,
-      number,
-      number,
-      number
-    ];
     this.useShader(new DefaultShader())
-      .setLightingUniforms(this, {
-        ambientProduct,
-        diffuseProduct,
-        specularProduct,
-        shininess: 100.0,
-        lightPosition: [3, -3, -3, 1],
-      })
+      .setLightingUniforms(this, this.light.getLightingUniforms())
       .setProjectionMatrixUniform(this, this.camera.projectionMatrix);
 
     this.character.render(this);

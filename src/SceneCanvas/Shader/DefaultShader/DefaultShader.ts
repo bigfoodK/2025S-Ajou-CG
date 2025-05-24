@@ -2,6 +2,7 @@ import type { Scene } from "../../Scene";
 import VertexShader from "./DefaultShader.vs?raw";
 import FragmentShader from "./DefaultShader.fs?raw";
 import Shader from "../Shader";
+import type { LightingUniforms as LightingUniforms } from "../../Light";
 
 export default class DefaultShader extends Shader {
   constructor() {
@@ -12,16 +13,7 @@ export default class DefaultShader extends Shader {
     return super.register(scene, VertexShader, FragmentShader);
   }
 
-  public setLightingUniforms(
-    scene: Scene,
-    lightingUniforms: {
-      ambientProduct?: [number, number, number, number];
-      diffuseProduct?: [number, number, number, number];
-      specularProduct?: [number, number, number, number];
-      shininess?: number;
-      lightPosition?: [number, number, number, number];
-    }
-  ) {
+  public setLightingUniforms(scene: Scene, lightingUniforms: LightingUniforms) {
     const gl = scene.gl;
     const {
       ambientProduct,

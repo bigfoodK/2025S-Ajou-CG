@@ -18,6 +18,7 @@ export default function SceneCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [cameraDistance, setCameraDistance] = useState(4);
   const [cameraSensitivity, setCameraSensitivity] = useState(0.05);
+  const [timeProgress, setTimeProgress] = useState(0.5);
   const theme = useTheme();
   const [settingsAnchorEl, setSettingsAnchorEl] = useState<null | HTMLElement>(
     null
@@ -33,7 +34,11 @@ export default function SceneCanvas() {
       return;
     }
 
-    sceneRef.current = new Scene(canvasRef.current);
+    sceneRef.current = new Scene(canvasRef.current, {
+      cameraDistance,
+      cameraSensitivity,
+      timeProgress,
+    });
     sceneRef.current.startRendering();
   }, []);
 
@@ -50,6 +55,13 @@ export default function SceneCanvas() {
     }
     sceneRef.current.cameraSensitivity = cameraSensitivity;
   }, [cameraSensitivity]);
+
+  useEffect(() => {
+    if (!sceneRef.current) {
+      return;
+    }
+    sceneRef.current.timeProgress = timeProgress;
+  }, [timeProgress]);
 
   const handleCanvasClick: MouseEventHandler<HTMLCanvasElement> = async (
     event
@@ -134,6 +146,18 @@ export default function SceneCanvas() {
                 value={cameraDistance}
                 onChange={(_event, value) => {
                   setCameraDistance(value);
+                }}
+              />
+            </Stack>
+            <Stack>
+              <InputLabel>Time Progress {timeProgress.toFixed(2)}</InputLabel>
+              <Slider
+                min={0}
+                max={0.99}
+                step={0.01}
+                value={timeProgress}
+                onChange={(_event, value) => {
+                  setTimeProgress(value);
                 }}
               />
             </Stack>
