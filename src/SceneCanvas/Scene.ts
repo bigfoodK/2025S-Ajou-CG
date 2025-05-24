@@ -10,13 +10,16 @@ export class Scene {
   private shouldStopRendering: boolean = false;
   private lastRenderTime: number = 0;
   public shaders: Map<string, Shader> = new Map();
-  public textures: Map<string, WebGLTexture> = new Map();
-  private camera: Camera = new Camera();
   private currentShaderName: string = "";
+  public textures: Map<string, WebGLTexture> = new Map();
+  public keyState: Map<string, boolean> = new Map();
+  private camera: Camera = new Camera();
   private character: Character = new Character({
     position: { x: 0, y: 0, z: 0 },
   });
   private plane: Floor = new Floor();
+  public cameraDistance: number = 4;
+  public cameraSensitivity: number = 0.05;
 
   constructor(canvas: HTMLCanvasElement) {
     this.gl = WebGLUtils.setupWebGL(canvas)!;
@@ -48,6 +51,7 @@ export class Scene {
     this.lastRenderTime = currentTime;
 
     // Tick
+    this.camera.setTarget(this.character.getCameraTarget(this.cameraDistance));
     this.camera.tick(this, deltaTime);
     this.character.tick(this, deltaTime, this.camera.viewMatrix);
     this.plane.tick(this, deltaTime, this.camera.viewMatrix);
@@ -158,5 +162,28 @@ export class Scene {
     this.gl.uniform1i(this.getUniformLocation("texture"), 0);
 
     return this;
+  }
+
+  public handleMouseMove(props: { x: number; y: number }) {
+    const { x, y } = props;
+    if (x) {
+      this.character.cameraRotate.y =
+        (this.character.cameraRotate.y - x * this.cameraSensitivity) % 360;
+    }
+    if (y) {
+      this.character.cameraRotate.x += y * this.cameraSensitivity;
+      // Clamp the vertical rotation to prevent flipping
+      this.character.cameraRotate.x = Math.max(
+        -22.5,
+        Math.min(22.5, this.character.cameraRotate.x)
+      );
+    }
+  }
+
+  public handleKeyDown(code: string) {
+    this.keyState.set(code, true);
+  }
+  public handleKeyUp(code: string) {
+    this.keyState.set(code, false);
   }
 }

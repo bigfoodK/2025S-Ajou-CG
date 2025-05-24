@@ -53,6 +53,10 @@ export default class Character extends CharacterPart {
     y: 0,
     z: 0,
   };
+  public cameraRotate: {
+    x: number;
+    y: number;
+  } = { x: 0, y: 0 };
 
   constructor(init: ModelInit = {}) {
     const bvhNode = parseBVH(toothlessDance);
@@ -69,6 +73,7 @@ export default class Character extends CharacterPart {
     deltaTime: number,
     initialModelViewMatrix: number[][] = mat4()
   ): void {
+    this.moveWithKeyState(scene, deltaTime);
     if (this.bvhNode.frames.length > 0) {
       const frameCount = this.bvhNode.frames.length;
       const frameTime = this.bvhNode.frameTime;
@@ -81,8 +86,9 @@ export default class Character extends CharacterPart {
 
       const previousFrame = this.bvhNode.frames[previousFrameIdx % frameCount];
       const nextFrame = this.bvhNode.frames[nextFrameIdx % frameCount];
+      const endOfFrame = nextFrameIdx >= frameCount;
       this.setFrameWithInterpolation(
-        previousFrame,
+        endOfFrame ? nextFrame : previousFrame,
         nextFrame,
         interpolationFactor
       );
@@ -97,13 +103,69 @@ export default class Character extends CharacterPart {
       scene,
       deltaTime,
       mult(
-        mult(initialModelViewMatrix, scalem(0.01, 0.01, 0.01)),
-        translate(
-          this.globalPosition.x,
-          this.globalPosition.y,
-          this.globalPosition.z
+        initialModelViewMatrix,
+        mult(
+          translate(
+            this.globalPosition.x,
+            this.globalPosition.y,
+            this.globalPosition.z
+          ),
+          mult(rotateY(this.cameraRotate.y), scalem(0.01, 0.01, 0.01))
         )
       ) as number[][]
     );
+  }
+
+  private moveWithKeyState(scene: Scene, deltaTime: number) {
+    let moveZ = 0;
+    let moveX = 0;
+    if (scene.keyState.get("KeyW")) {
+      moveZ += 1;
+    }
+    if (scene.keyState.get("KeyS")) {
+      moveZ -= 1;
+    }
+    if (scene.keyState.get("KeyA")) {
+      moveX += 1;
+    }
+    if (scene.keyState.get("KeyD")) {
+      moveX -= 1;
+    }
+
+    const speed = 0.005 * deltaTime;
+    const movement = mult(
+      scalem(speed, speed, speed),
+      mult(rotateY(this.cameraRotate.y), [moveX, 0, moveZ, 1])
+    ) as number[];
+    this.globalPosition.x += movement[0];
+    this.globalPosition.z += movement[2];
+  }
+
+  public getCameraTarget(cameraDistance: number): { position: XYZ; gaze: XYZ } {
+    const targetPosition = mult(
+      translate(
+        this.globalPosition.x,
+        this.globalPosition.y,
+        this.globalPosition.z
+      ),
+      mult(
+        rotateY(this.cameraRotate.y),
+        mult(rotateX(this.cameraRotate.x), [0, 1.7, -cameraDistance, 1])
+      )
+    ) as number[];
+
+    const targetGaze = {
+      ...this.globalPosition,
+    };
+    targetGaze.y += 1.7;
+
+    return {
+      position: {
+        x: targetPosition[0],
+        y: targetPosition[1],
+        z: targetPosition[2],
+      },
+      gaze: targetGaze,
+    };
   }
 }
