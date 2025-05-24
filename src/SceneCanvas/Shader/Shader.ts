@@ -63,10 +63,12 @@ export default abstract class Shader {
     return this;
   }
 
-  public registerModels(scene: Scene, models: Model[]): void {
+  public async registerModels(scene: Scene, models: Model[]): Promise<void> {
     const vertices: number[][] = [];
-    models.forEach((model) => {
-      model.forEachModelIncludingSelf((model) => {
+    const normals: number[][] = [];
+    const texcoords: number[][] = [];
+    for (const model of models) {
+      await model.forEachModelIncludingSelf(async (model) => {
         const modelVertices = model.vertices();
         const vertexInfo = {
           index: vertices.length,
@@ -74,22 +76,10 @@ export default abstract class Shader {
         };
         this.modelVertexInfo.set(model.constructor.name, vertexInfo);
         vertices.push(...modelVertices);
+        normals.push(...model.normals());
+        texcoords.push(...model.texcoords());
+        await model.texture().register(scene);
       });
-    });
-
-    const normals: number[][] = [];
-    let normalIndex = 0;
-    while (normalIndex < vertices.length) {
-      const v1 = vertices[normalIndex];
-      const v2 = vertices[normalIndex + 1];
-      const v3 = vertices[normalIndex + 2];
-      const u = subtract(v1, v2) as [number, number, number];
-      const v = subtract(v3, v1) as [number, number, number];
-      const normal = normalize(cross(u, v));
-      normals.push(normal);
-      normals.push(normal);
-      normals.push(normal);
-      normalIndex += 3;
     }
 
     const gl = scene.gl;
@@ -120,6 +110,19 @@ export default abstract class Shader {
     }
     gl.vertexAttribPointer(vNormal, 3, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vNormal);
+
+    const texcoordBuffer = gl.createBuffer();
+    if (!texcoordBuffer) {
+      throw new Error("Unable to create texcoord buffer");
+    }
+    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(texcoords), gl.STATIC_DRAW);
+    const vTexCoord = gl.getAttribLocation(this.getProgram(), "vTexCoord");
+    if (vTexCoord === -1) {
+      throw new Error("Unable to get attribute location for vTexCoord");
+    }
+    gl.vertexAttribPointer(vTexCoord, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vTexCoord);
   }
 
   public setModelViewMatrixUniform(scene: Scene, matrix: number[][]) {

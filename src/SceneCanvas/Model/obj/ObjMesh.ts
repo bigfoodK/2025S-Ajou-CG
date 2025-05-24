@@ -38,7 +38,12 @@ export default class ObjMesh {
       });
     });
   }
-  // public getTexcoords() {
-  //   return this.texcoords;
-  // }
+  public getTexcoords(): number[][] {
+    return this.faces.flatMap((face) => {
+      return face.map((point) => {
+        const texcoord = this.texcoords[point.texcoordIndex];
+        return texcoord ? [texcoord[0], texcoord[1]] : [0, 0];
+      });
+    });
+  }
 }

@@ -3,12 +3,14 @@ import Character from "./Model/Character";
 import Floor from "./Model/Floor";
 import DefaultShader from "./Shader/DefaultShader/DefaultShader";
 import type Shader from "./Shader/Shader";
+import type Texture from "./Texture/Texture";
 
 export class Scene {
   public gl: WebGLRenderingContext;
   private shouldStopRendering: boolean = false;
   private lastRenderTime: number = 0;
   public shaders: Map<string, Shader> = new Map();
+  public textures: Map<string, WebGLTexture> = new Map();
   private camera: Camera = new Camera();
   private currentShaderName: string = "";
   private character: Character = new Character({
@@ -55,11 +57,11 @@ export class Scene {
 
     // Render
     // TODO: Move lighting to somewhere else
-    const lightAmbient = vec4(0.2, 0.2, 0.2, 1.0);
+    const lightAmbient = vec4(0.6, 0.6, 0.6, 1.0);
     const lightDiffuse = vec4(1.0, 1.0, 0.0, 1.0);
     const lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
 
-    const materialAmbient = vec4(1.0, 0.0, 1.0, 1.0);
+    const materialAmbient = vec4(1.0, 1.0, 1.0, 1.0);
     const materialDiffuse = vec4(1.0, 0.8, 0.0, 1.0);
     const materialSpecular = vec4(1.0, 0.8, 0.0, 1.0);
 
@@ -97,9 +99,9 @@ export class Scene {
     requestAnimationFrame(this.render.bind(this));
   }
 
-  public startRendering() {
+  public async startRendering() {
     this.camera.setProjectionProperty();
-    this.registerShaders();
+    await this.registerShaders();
     this.render();
   }
 
@@ -107,8 +109,8 @@ export class Scene {
     this.shouldStopRendering = true;
   }
 
-  private registerShaders() {
-    new DefaultShader()
+  private async registerShaders() {
+    await new DefaultShader()
       .register(this)
       .registerModels(this, [this.character, this.plane]);
   }
@@ -118,11 +120,6 @@ export class Scene {
     if (!registeredShader) {
       throw new Error(`Shader ${shader.constructor.name} is not registered.`);
     }
-
-    if (shader.constructor.name === this.currentShaderName) {
-      return registeredShader as T;
-    }
-
     this.currentShaderName = shader.constructor.name;
     this.gl.useProgram(registeredShader.program);
     return registeredShader as T;
@@ -148,5 +145,18 @@ export class Scene {
       throw new Error(`Shader ${this.currentShaderName} is not registered.`);
     }
     return shader;
+  }
+
+  public useTexture(texture: Texture): Scene {
+    const registeredTexture = this.textures.get(texture.constructor.name);
+    if (!registeredTexture) {
+      throw new Error(`Texture ${texture.constructor.name} is not registered.`);
+    }
+
+    this.gl.activeTexture(this.gl.TEXTURE0);
+    this.gl.bindTexture(this.gl.TEXTURE_2D, registeredTexture);
+    this.gl.uniform1i(this.getUniformLocation("texture"), 0);
+
+    return this;
   }
 }

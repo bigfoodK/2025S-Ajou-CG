@@ -1,4 +1,5 @@
 import type { Scene } from "../Scene";
+import FloorTexture from "../Texture/FloorTexture";
 import Model, { type ModelInit } from "./Model";
 import { modelObjectMeshMap } from "./obj/modelObjectMeshMap";
 
@@ -7,8 +8,11 @@ export default class Floor extends Model {
     super(init);
   }
 
+  public texture() {
+    return new FloorTexture();
+  }
+
   public vertices() {
-    console.log(modelObjectMeshMap.get(this.constructor.name)!.getVertices());
     return modelObjectMeshMap.get(this.constructor.name)!.getVertices();
   }
 
@@ -16,8 +20,13 @@ export default class Floor extends Model {
     return modelObjectMeshMap.get(this.constructor.name)!.getNormals();
   }
 
+  public texcoords() {
+    return modelObjectMeshMap.get(this.constructor.name)!.getTexcoords();
+  }
+
   public render(scene: Scene): void {
     scene
+      .useTexture(this.texture())
       .currentShader()
       .setModelViewMatrixUniform(scene, this.modelViewMatrix);
     const vertexInfo = this.getVertexInfo(scene);

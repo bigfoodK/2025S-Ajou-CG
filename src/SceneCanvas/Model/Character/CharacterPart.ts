@@ -1,4 +1,5 @@
 import type { Scene } from "../../Scene";
+import { characterTextureMap } from "../../Texture/Character";
 import type { ModelInit, XYZ } from "../Model";
 import Model from "../Model";
 import { modelObjectMeshMap } from "../obj/modelObjectMeshMap";
@@ -65,6 +66,10 @@ export class CharacterPart extends Model {
     super.tick(scene, deltaTime, initialModelViewMatrix);
   }
 
+  public texture() {
+    return characterTextureMap.get(this.constructor.name)!;
+  }
+
   public vertices() {
     return modelObjectMeshMap.get(this.constructor.name)!.getVertices();
   }
@@ -73,10 +78,16 @@ export class CharacterPart extends Model {
     return modelObjectMeshMap.get(this.constructor.name)!.getNormals();
   }
 
+  public texcoords() {
+    return modelObjectMeshMap.get(this.constructor.name)!.getTexcoords();
+  }
+
   public render(scene: Scene): void {
     scene
+      .useTexture(this.texture())
       .currentShader()
       .setModelViewMatrixUniform(scene, this.modelViewMatrix);
+
     const vertexInfo = this.getVertexInfo(scene);
     scene.gl.drawArrays(
       scene.gl.TRIANGLES,

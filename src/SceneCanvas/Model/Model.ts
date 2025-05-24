@@ -1,4 +1,5 @@
 import type { Scene } from "../Scene";
+import type Texture from "../Texture/Texture";
 
 export default abstract class Model {
   public position: XYZ;
@@ -19,9 +20,13 @@ export default abstract class Model {
     this.children.push(child);
   }
 
+  public abstract texture(): Texture;
+
   public abstract vertices(): number[][];
 
   public abstract normals(): number[][];
+
+  public abstract texcoords(): number[][];
 
   public abstract render(scene: Scene): void;
 
@@ -75,11 +80,13 @@ export default abstract class Model {
     this.modelViewMatrix = modelViewMatrix;
   }
 
-  public forEachModelIncludingSelf(callback: (model: Model) => void) {
-    callback(this);
-    this.children.forEach((child) => {
-      child.forEachModelIncludingSelf(callback);
-    });
+  public async forEachModelIncludingSelf(
+    callback: (model: Model) => Promise<void>
+  ) {
+    await callback(this);
+    for (const child of this.children) {
+      await child.forEachModelIncludingSelf(callback);
+    }
   }
 }
 

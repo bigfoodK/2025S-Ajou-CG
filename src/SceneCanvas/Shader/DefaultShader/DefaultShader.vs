@@ -1,6 +1,9 @@
 attribute vec4 vPosition;
 attribute vec3 vNormal;
+attribute vec2 vTexCoord;
+
 varying vec4 fColor;
+varying vec2 fTexCoord;
 
 uniform vec4 ambientProduct, diffuseProduct, specularProduct;
 uniform mat4 modelViewMatrix;
@@ -38,6 +41,6 @@ void main() {
 
     gl_Position = projectionMatrix * modelViewMatrix * vPosition;
     fColor = ambient + diffuse + specular;
-
     fColor.a = 1.0;
+    fTexCoord = vTexCoord;
 }
