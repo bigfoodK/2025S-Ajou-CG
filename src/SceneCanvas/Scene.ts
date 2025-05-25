@@ -2,6 +2,7 @@ import Camera from "./Camera";
 import Light from "./Light";
 import Character from "./Model/Character";
 import Floor from "./Model/Floor";
+import Tree from "./Model/Tree";
 import DefaultShader from "./Shader/DefaultShader/DefaultShader";
 import type Shader from "./Shader/Shader";
 import type Texture from "./Texture/Texture";
@@ -20,6 +21,7 @@ export class Scene {
     position: { x: 0, y: 0, z: 0 },
   });
   private plane: Floor = new Floor();
+  private trees: Tree[] = [];
   public cameraDistance: number;
   public cameraSensitivity: number;
   public timeProgress: number;
@@ -64,11 +66,14 @@ export class Scene {
     this.lastRenderTime = currentTime;
 
     // Tick
-    this.light.tick(this.timeProgress);
     this.camera.setTarget(this.character.getCameraTarget(this.cameraDistance));
     this.camera.tick(this, deltaTime);
+    this.light.tick(this.timeProgress, this.camera.viewMatrix);
     this.character.tick(this, deltaTime, this.camera.viewMatrix);
     this.plane.tick(this, deltaTime, this.camera.viewMatrix);
+    this.trees.forEach((tree) => {
+      tree.tick(this, deltaTime, this.camera.viewMatrix);
+    });
 
     // Clear
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
@@ -80,6 +85,9 @@ export class Scene {
 
     this.character.render(this);
     this.plane.render(this);
+    this.trees.forEach((tree) => {
+      tree.render(this);
+    });
 
     requestAnimationFrame(this.render.bind(this));
   }
@@ -87,6 +95,21 @@ export class Scene {
   public async startRendering() {
     this.camera.setProjectionProperty();
     await this.registerShaders();
+    this.trees = Array.from({ length: 50 }).map(
+      () =>
+        new Tree({
+          position: {
+            x: (Math.random() - 0.5) * 40,
+            y: 0,
+            z: (Math.random() - 0.5) * 40,
+          },
+          rotation: {
+            x: 0,
+            y: Math.random() * 360,
+            z: 0,
+          },
+        })
+    );
     this.render();
   }
 
@@ -97,7 +120,7 @@ export class Scene {
   private async registerShaders() {
     await new DefaultShader()
       .register(this)
-      .registerModels(this, [this.character, this.plane]);
+      .registerModels(this, [this.character, this.plane, new Tree()]);
   }
 
   public useShader<T extends Shader>(shader: T): T {
