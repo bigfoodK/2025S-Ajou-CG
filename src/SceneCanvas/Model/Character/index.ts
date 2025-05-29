@@ -73,7 +73,6 @@ export default class Character extends CharacterPart {
     deltaTime: number,
     initialModelViewMatrix: number[][] = mat4()
   ): void {
-    this.moveWithKeyState(scene, deltaTime);
     if (this.bvhNode.frames.length > 0) {
       const frameCount = this.bvhNode.frames.length;
       const frameTime = this.bvhNode.frameTime;
@@ -116,7 +115,7 @@ export default class Character extends CharacterPart {
     );
   }
 
-  private moveWithKeyState(scene: Scene, deltaTime: number) {
+  public moveWithKeyState(scene: Scene, deltaTime: number) {
     let moveZ = 0;
     let moveX = 0;
     if (scene.keyState.get("KeyW")) {

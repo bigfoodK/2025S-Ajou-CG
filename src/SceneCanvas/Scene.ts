@@ -20,6 +20,7 @@ export class Scene {
   private character: Character = new Character({
     position: { x: 0, y: 0, z: 0 },
   });
+  private npcs: Character[] = createNpcs();
   private plane: Floor = new Floor();
   private trees: Tree[] = [];
   public cameraDistance: number;
@@ -69,7 +70,11 @@ export class Scene {
     this.camera.setTarget(this.character.getCameraTarget(this.cameraDistance));
     this.camera.tick(this, deltaTime);
     this.light.tick(this.timeProgress, this.camera.viewMatrix);
+    this.character.moveWithKeyState(this, deltaTime);
     this.character.tick(this, deltaTime, this.camera.viewMatrix);
+    this.npcs.forEach((npc) => {
+      npc.tick(this, deltaTime, this.camera.viewMatrix);
+    });
     this.plane.tick(this, deltaTime, this.camera.viewMatrix);
     this.trees.forEach((tree) => {
       tree.tick(this, deltaTime, this.camera.viewMatrix);
@@ -84,6 +89,9 @@ export class Scene {
       .setProjectionMatrixUniform(this, this.camera.projectionMatrix);
 
     this.character.render(this);
+    this.npcs.forEach((npc) => {
+      npc.render(this);
+    });
     this.plane.render(this);
     this.trees.forEach((tree) => {
       tree.render(this);
@@ -190,4 +198,19 @@ export class Scene {
   public handleKeyUp(code: string) {
     this.keyState.set(code, false);
   }
+}
+
+function createNpcs(): Character[] {
+  return [
+    [1, 2, -90],
+    [2, 4, 190],
+    [-2, -2, 30],
+    [5, 5, 90],
+    [5, -5, -90],
+  ].map(([x, z, rotate]) => {
+    const npc = new Character();
+    npc.globalPosition = { x, y: 0, z };
+    npc.cameraRotate = { x: 0, y: rotate };
+    return npc;
+  });
 }
